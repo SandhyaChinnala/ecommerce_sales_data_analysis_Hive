@@ -30,11 +30,17 @@ Analysis using Hadoop Hive Batch process Analysis.
 
 HIVE JOBS:
 1. Customer Segmentation
+
     Categorizing customers based on their spendings
+    
 2. Monthly Trend Forecasting
+
     the monthly trend of sales
+    
 3. Hourly Sales Analysis
+
     Which hour has more no. of sales?
+    
 4. Product Based Analysis
     Which category product has sold more?
     Which category product has more rating?
