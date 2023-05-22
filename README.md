@@ -1,6 +1,7 @@
 # ecommerce_sales_data_analysis_Hive
 
 Ecommerce Sales Data Analysis:
+
 Hive Mini Project to Build a Data Warehouse for e-Commerce Sales Analysis:
 In this hive project, designed a data warehouse for e-commerce application to perform Hive analytics on Sales and Customer
 Demographics data using big data tools such as Sqoop, Hadoop, HDFS,HIVE.
@@ -42,21 +43,38 @@ HIVE JOBS:
     Which hour has more no. of sales?
     
 4. Product Based Analysis
+
     Which category product has sold more?
+    
     Which category product has more rating?
+    
     Which product has sold more?
+    
     Top 10 highest & least product rating?
+    
     Order Count for each rating
+    
 5. Payment Preference
-    What are the most commonly used payment types?
+   
+   What are the most commonly used payment types?
+    
     Count of Orders With each No. of Payment Installments
+    
 6. Potential Customer's Location
     Where do most customers come from?
+    
 7. Seller Rating
+    
     Which seller sold more?
+    
     Which seller got more rating?
+    
 8. Logistics based Optimization Insights
+    
     Which city buys heavy weight products and low weight products?
+    
     How much products sold within seller state?
+    
 And Finally Visualization with Power BI.
+
                                                                     *********
