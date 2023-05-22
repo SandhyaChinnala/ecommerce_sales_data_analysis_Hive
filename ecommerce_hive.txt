@@ -1,0 +1,754 @@
+				HIVE MINI PROJECT -- ECOMMERCE SALES DATA ANALYSIS
+
+CREATING INTERNAL TABLE IN HIVE:
+create table ecom_data(order_id STRING, customer_id STRING,quantity INT, price_MRP DOUBLE, payment FLOAT, timestamp STRING, rating INT,product_category STRING, product_id STRING, payment_type STRING, order_status STRING, product_weight_g INT, product_length_cm INT, product_height_cm INT, product_width_cm INT, customer_city STRING, customer_state STRING, seller_id STRING, seller_city STRING, seller_state STRING, payment_installments INT)row format delimited fields terminated by ',';
+
+
+SAMPLE SCHEMA:
+9045fa841de3514ce900f5fc869d9b1f, 2f8d6af8cb3875d6964eb4b5eff3a718, 1, 1074.38, 1095.65, 21-11-2017 22:34, 5, health_beauty, 0a37e05528984f47c754837344732fbb, credit_card, delivered, 800, 40, 20, 30, osasco, SP, ccc4bbb5f32a6ab2b7066a4130f114e3, curitiba, PR, 5
+
+LOADING DATA INTO TABLE:
+hive> load data inpath '/user/cloudera/HiveMiniProject/ecom_data.csv' into table ecom_data;
+
+CHECKING TABLES:
+hive> show tables;
+OK
+ecom_data
+
+hive> select * from ecom_data limit 2;
+OK
+9045fa841de3514ce900f5fc869d9b1f	2f8d6af8cb3875d6964eb4b5eff3a718	1	1074.38	1095.65	21-11-2017 22:34	5health_beauty	0a37e05528984f47c754837344732fbb	credit_card	delivered	800	40	20	30	osasco	SP	ccc4bbb5f32a6ab2b7066a4130f114e3	curitiba	PR	5
+404c087c1f661898fcfe9d4c4b1480d7	1ce70910bc16481433b771949f74552c	1	145.0	161.71	24-02-2017 22:55	5health_beauty	67473aa97e981b3b8abaa6a8a768eb26	credit_card	delivered	400	38	12	25	campos dos goytacazes	RJ	ccc4bbb5f32a6ab2b7066a4130f114e3	curitiba	PR	7
+Time taken: 0.723 seconds, Fetched: 2 row(s)
+
+hive> select count(*) from ecom_data;
+Total MapReduce CPU Time Spent: 6 seconds 70 msec
+OK
+116580
+Time taken: 67.005 seconds, Fetched: 1 row(s)
+
+select unix_timestamp(timestamp,'yyyy/MM/dd HH:mm') from ecom_data;
+
+NULL
+-61922097900
+NULL
+NULL
+-61609162260
+NULL
+-61764329100
+NULL
+
+
+select from_unixtime(unix_timestamp(timestamp,'yyyy/MM/dd'),'yyyy-MM-dd') from ecom_data;
+
+0008-11-07
+0010-11-08
+NULL
+NULL
+0010-11-08
+NULL
+0014-11-08
+NULL
+0008-01-08
+
+hive> SELECT CURRENT_TIMESTAMP; 
+OK
+2023-05-20 10:27:27.357
+Time taken: 1.801 seconds, Fetched: 1 row(s)
+
+hive> select timestamp from ecom_data limit 10;
+OK
+21-11-2017 22:34
+24-02-2017 22:55
+19-01-2017 14:28
+1/6/2018 22:22:00
+15-06-2018 20:36
+4/8/2018 21:57:00
+20-06-2017 14:53
+24-11-2017 10:23
+28-11-2017 09:37
+6/12/2017 13:05:00
+Time taken: 0.157 seconds, Fetched: 10 row(s)
+
+
+hive> select payment from ecom_data limit 20;
+OK
+1095.65
+161.71
+161.71
+585.95
+250.32
+238.61
+882.46
+606.87
+607.87
+696.58
+1650.56
+1629.33
+428.8
+365.37
+381.88
+398.69
+369.6
+378.89
+379.2
+373.17
+Time taken: 0.133 seconds, Fetched: 20 row(s)
+
+hive> select max(payment) from ecom_data;
+Total MapReduce CPU Time Spent: 7 seconds 760 msec
+OK
+13664.08
+Time taken: 60.926 seconds, Fetched: 1 row(s)
+
+hive> select min(payment) from ecom_data;
+Total MapReduce CPU Time Spent: 7 seconds 390 msec
+OK
+0.0
+Time taken: 55.651 seconds, Fetched: 1 row(s)
+
+hive> select avg(payment) from ecom_data;
+Total MapReduce CPU Time Spent: 7 seconds 310 msec
+OK
+172.89491977063489
+Time taken: 54.606 seconds, Fetched: 1 row(s)
+
+				HIVE JOBS -- USER STORIES
+PS1:
+Customer Segmentation
+Categorizing customers based on their spendings
+
+HIVE QUERY:
+select customer_id, sum(payment) as total_spending, 
+case 
+	when sum(payment) >= 2000 then 'Big Spender' 
+	when 500>=sum(payment)<=1500 then 'Mediocre Spender' 
+	else 'Little Spender' 
+	end as Spending_Habits 
+from ecom_data group by customer_id;
+ 
+OUTPUT:
+ca6daade283e024f6638daaef1dcb5fe	181.5300006866455	Mediocre Spender
+ca6e57539d37dce0eb0918a00d8ce7b3	3853.360107421875	Big Spender
+ca6f288f99561aedae10f44e948e7e61	405.45001220703125	Mediocre Spender
+ca6fe18d9474b6e6bd41278ca47b19cf	124.5	Mediocre Spender
+ca720fa7d26443de66ea5e54e3f0068c	541.9600219726562	Mediocre Spender
+ca72bae56a62ab7ef618c2d480419281	87.81999969482422	Mediocre Spender
+ca741dc70e1b166cd577ba7050158cfa	94.31999969482422	Mediocre Spender
+
+
+EXTERNAL TABLE:
+create external table PS1 (custoemr_id string, total_amnt double, spending_habits string)row format delimited fields terminated by ' ' location '/user/hive/warehouse/hiveProject/ps1/problem1.txt';
+
+INSERTING PROBLEM 1 QUERY INTO EXTERNAL TABLE:
+insert overwrite table PS1 select customer_id, sum(payment) as total_spending,case when sum(payment) >= 2000 then 'Big Spender' when 500>=sum(payment)<=1500 then 'Mediocre Spender' else 'Little Spender' end as Spending_Habits from ecom_data group by customer_id;
+
+00012a2ce6f8dcda20d059ce98491703 114.73999786376953 Mediocre Spender
+000161a058600d5901f007fab4c27140 67.41000366210938 Mediocre Spender
+0001fd6190edaaf884bcaf3d49edf079 195.4199981689453 Mediocre Spender
+0002414f95344307404f0ace7a26f1d5 179.35000610351562 Mediocre Spender
+
+DOUBLE(size, d) -----> A normal-size floating point number. The total number of digits is specified in size. The number of digits after the decimal point is specified in the d parameter
+
+
+CREATING TABLE FOR CLIENT DB:
+create table Problem1(customer_id VARCHAR(100), total_amnt DOUBLE(10, 5), spending_habits VARCHAR(100));
+
+SQOOP EXPORT QUERY:
+sqoop export --connect jdbc:mysql://localhost:3306/ecommerce --username root --password cloudera --table Problem1 --export-dir /user/hive/warehouse/hiveProject/ps1/problem1.txt/000000_0 --input-fields-terminated-by ‘,'
+
+sqoop export --connect jdbc:mysql://localhost:3306/ecom --username root --password cloudera --table p1 --export-dir /user/hive/warehouse/p1/000000_0 --input-fields-terminated-by ','
+
+
+
+TO CHANGE THE FORMAT OF TIMESTAMP IN ECOMMERCE TABLE:
+
+create table ecommerce_sales as select order_id,customer_id,quantity,price_MRP,payment,case when timestamp like '%/%' then FROM_UNIXTIME(UNIX_TIMESTAMP(timestamp, 'MM/dd/yyyy HH:mm'), 'yyyy-MM-dd HH:mm') when timestamp like '%-%' then FROM_UNIXTIME(UNIX_TIMESTAMP(timestamp, 'dd-MM-yyyy HH:mm'), 'yyyy-MM-dd HH:mm') else timestamp end as datetime, rating,product_category,product_id,payment_type,order_status,product_weight_g, product_length_cm,product_height_cm,product_width_cm,customer_city,customer_state,seller_id,seller_city,seller_state,payment_installments from ecom_data;
+
+PS2.
+Monthly trend of Sales:
+create external table PS2(sales_month string, total_sales double)row format delimited fields terminated by ',' location '/user/hive/warehouse/hiveProject/ps2/problem2.txt';
+
+insert overwrite table PS2 select month(datetime) sales_month, sum(quantity) as total_sales from ecommerce_sales group by month(datetime) order by sales_month;
+Total MapReduce CPU Time Spent: 5 seconds 50 msec
+OK
+Time taken: 43.758 seconds
+
+
+select month(datetime) sales_month, sum(quantity) as total_sales from ecommerce_sales group by month(datetime) order by sales_month;
+Total MapReduce CPU Time Spent: 4 seconds 860 msec
+OK
+1	11784
+2	11719
+3	12796
+4	12626
+5	13231
+6	12287
+7	14541
+8	12517
+9	8195
+10	8674
+11	12899
+12	8272
+Time taken: 42.049 seconds, Fetched: 12 row(s)
+
+MYSQL TABLE:
+create table Problem2(sales_month varchar(30), total_sales float);
+
+sqoop export --connect jdbc:mysql://localhost:3306/ecommerce --username root --password cloudera --table Problem2 --export-dir /user/hive/warehouse/hiveProject/ps2/problem2.txt/000000_0 --input-fields-terminated-by ','
+
+
+PS3.
+Hourly Sales Analysis
+Which hour has more no. of sales?
+
+select distinct datetime from ecommerce_sales;
+2018-12-08 23:31
+2018-12-08 23:34
+2018-12-08 23:44
+2018-12-08 23:46
+2018-12-08 23:58
+Time taken: 25.377 seconds, Fetched: 87009 row(s)
+
+
+select hour(datetime) hourly_sales, sum(quantity) as total_sales from ecommerce_sales group by hour(datetime) order by hourly_sales;
+
+SELECT HOUR(datetime) AS hour, COUNT(*) AS sales_count FROM ecommerce GROUP BY HOUR(datetime) ORDER BY sales_count DESC LIMIT 5;
+
+select  FROM_UNIXTIME(UNIX_TIMESTAMP(datetime,'yyyy-mm-dd HH:mm'),'yyyy-MM-dd')  as the_date, FROM_UNIXTIME(UNIX_TIMESTAMP(datetime,'yyyy-mm-dd HH:mm'),'H') as H,FROM_UNIXTIME(UNIX_TIMESTAMP(datetime,'yyyy-mm-dd HH:mm'),'HH') as HH from ecommerce_sales;
+2018-01-06	22	22
+2017-01-30	18	18
+2017-01-08	14	14
+2017-01-17	16	16
+2017-01-26	11	11
+Time taken: 0.063 seconds, Fetched: 116580 row(s)
+
+
+select FROM_UNIXTIME(UNIX_TIMESTAMP(datetime,'yyyy-mm-dd HH:mm'),'HH') as HH, count(*) as hourly_sales from ecommerce_sales group by FROM_UNIXTIME(UNIX_TIMESTAMP(datetime,'yyyy-mm-dd HH:mm'),'HH') order by hourly_sales;
+Total MapReduce CPU Time Spent: 4 seconds 980 msec
+OK
+05	214
+04	252
+03	322
+06	565
+02	598
+01	1324
+07	1405
+00	2871
+08	3487
+23	4853
+09	5573
+18	6791
+22	6869
+19	6923
+12	7115
+21	7170
+20	7190
+17	7193
+10	7256
+15	7558
+13	7629
+11	7688
+14	7833
+16	7901
+Time taken: 41.37 seconds, Fetched: 24 row(s)
+
+select FROM_UNIXTIME(UNIX_TIMESTAMP(datetime,'yyyy-mm-dd HH:mm'),'HH') as HH, count(*) as hourly_sales from ecommerce_sales group by FROM_UNIXTIME(UNIX_TIMESTAMP(datetime,'yyyy-mm-dd HH:mm'),'HH') order by HH desc limit 3;
+Total MapReduce CPU Time Spent: 5 seconds 790 msec
+OK
+23	4853
+22	6869
+21	7170
+Time taken: 43.519 seconds, Fetched: 3 row(s)
+
+PS4.1
+Product Based Analysis
+Which category product has sold more?
+
+select product_category, sum(quantity) as total_sold from ecommerce_sales group by product_category order by total_sold desc;
+Total MapReduce CPU Time Spent: 11 seconds 240 msec
+OK
+bed_bath_table	14797
+furniture_decor	12186
+health_beauty	11486
+sports_leisure	10349
+computers_accessories	10273
+housewares	9559
+watches_gifts	6823
+garden_tools	6152
+telephony	5354
+auto	5067
+toys	4619
+cool_stuff	4297
+perfumery	3964
+baby	3575
+electronics	3182
+stationery	2924
+office_furniture	2677
+fashion_bags_accessories	2419
+pet_shop	2365
+construction_tools_construction	1322
+consoles_games	1304
+luggage_accessories	1256
+home_construction	848
+home_appliances	833
+musical_instruments	809
+small_appliances	772
+furniture_living_room	698
+food	625
+books_general_interest	621
+drinks	586
+home_confort	557
+construction_tools_lights	444
+market_place	401
+audio	400
+food_drink	379
+fixed_telephony	375
+air_conditioning	368
+kitchen_dining_laundry_garden_furniture	349
+industry_commerce_and_business	317
+agro_industry_and_commerce	316
+costruction_tools_garden	315
+fashion_shoes	312
+signaling_and_security	309
+books_technical	280
+home_appliances_2	276
+construction_tools_safety	257
+computers	253
+art	240
+christmas_supplies	204
+fashion_male_clothing	172
+fashion_underwear_beach	160
+furniture_bedroom	148
+costruction_tools_tools	111
+tablets_printing_image	93
+cine_photo	84
+small_appliances_home_oven_and_coffee	79
+dvds_blu_ray	77
+books_imported	71
+fashio_female_clothing	68
+diapers_and_hygiene	66
+party_supplies	50
+music	41
+furniture_mattress_and_upholstery	41
+home_comfort_2	40
+fashion_sport	39
+flowers	37
+arts_and_craftmanship	26
+la_cuisine	18
+cds_dvds_musicals	16
+fashion_childrens_clothes	8
+security_and_services	2
+Time taken: 99.577 seconds, Fetched: 71 row(s)
+
+
+select product_category, sum(quantity) as total_sold from ecommerce_sales group by product_category order by total_sold desc limit 1;
+Total MapReduce CPU Time Spent: 11 seconds 360 msec
+OK
+bed_bath_table	14797
+Time taken: 98.844 seconds, Fetched: 1 row(s)
+
+PS4.2
+Which category product has more rating?
+
+select product_category, avg(rating) as avg_rating from ecommerce_sales group by product_category order by avg_rating desc limit 1;
+Total MapReduce CPU Time Spent: 12 seconds 140 msec
+OK
+cds_dvds_musicals	4.642857142857143
+Time taken: 98.96 seconds, Fetched: 1 row(s)
+
+PS4.3
+which product has sold more?
+
+select product_id, sum(quantity) as sale from ecommerce_sales group by product_id order by sale desc limit 1;
+Total MapReduce CPU Time Spent: 23 seconds 540 msec
+OK
+422879e10f46682990de24d770e7f83d	826
+Time taken: 113.516 seconds, Fetched: 1 row(s)
+
+PS4.4
+Top 10 highest & least product rating?
+
+select product_id, avg(rating) as avg_rating, ROW_NUMBER() OVER (ORDER BY avg(rating) DESC) as row_num from ecommerce_sales group by product_id having row_num <=10;
+select product_id, avg(rating) as ratings from ecommerce_sales group by product_id order by ratings desc limit 10;
+
+Total MapReduce CPU Time Spent: 27 seconds 940 msec
+OK
+6da34f576ae8ae67eefc6284461cea8b	5.0
+6d9bbcfa5f0e5aeef4157f4e6b0047c3	5.0
+6d9a616e3f494f52af56e49a61b9a327	5.0
+4a1ccd2d546bbea7809a0cf98863eb50	5.0
+6d8df074fad8f0315c8226b43f71a084	5.0
+6d8d9c9af735eae354cb0b43a9cbebfa	5.0
+6d8a7c569e0db81df2d1589bc7c9af4e	5.0
+6d88fb20983e211be9168534b580c833	5.0
+6d85d9d5f551adaa92a276918f462fbe	5.0
+6d81453f00fb94345c02d87149c52f00	5.0
+Time taken: 330.601 seconds, Fetched: 10 row(s)
+
+
+
+select product_id, avg(rating) as ratings, 'Highest' as category from ecommerce_sales group by product_id order by ratings desc limit 10 union all select product_id, avg(rating) as ratings, 'Lowest' as category from ecommerce_sales group by product_id order by ratings asc limit 10;
+
+
+6da34f576ae8ae67eefc6284461cea8b	5.0
+6d9bbcfa5f0e5aeef4157f4e6b0047c3	5.0
+6d9a616e3f494f52af56e49a61b9a327	5.0
+4a1ccd2d546bbea7809a0cf98863eb50	5.0
+6d8df074fad8f0315c8226b43f71a084	5.0
+6d8d9c9af735eae354cb0b43a9cbebfa	5.0
+6d8a7c569e0db81df2d1589bc7c9af4e	5.0
+6d88fb20983e211be9168534b580c833	5.0
+6d85d9d5f551adaa92a276918f462fbe	5.0
+6d81453f00fb94345c02d87149c52f00	5.0
+b64ed807e9a505b54796b0937146d0bc	1.0
+b6467b14d837634f4e04f6f0698e7bd3	1.0
+93d8b11d613a563f5a26212282bb145e	1.0
+93e27ca75901cf1b9d641cd11dd9f6e5	1.0
+154696c4f8e96ed48f0c191eb09c0683	1.0
+b63b2afaf851b15bdec6e67c553c0ece	1.0
+b6397895a17ce86decd60b898b459796	1.0
+93e6c730cc84ef7cfdd20cdfb2269144	1.0
+93ebf843a46dd3ba8085784ff4c604fc	1.0
+93f77f106febe8a119cf3662dd609b3a	1.0
+Time taken: 288.896 seconds, Fetched: 20 row(s)
+
+6da34f576ae8ae67eefc6284461cea8b	5.0	Highest
+6d9bbcfa5f0e5aeef4157f4e6b0047c3	5.0	Highest
+6d9a616e3f494f52af56e49a61b9a327	5.0	Highest
+4a1ccd2d546bbea7809a0cf98863eb50	5.0	Highest
+6d8df074fad8f0315c8226b43f71a084	5.0	Highest
+6d8d9c9af735eae354cb0b43a9cbebfa	5.0	Highest
+6d8a7c569e0db81df2d1589bc7c9af4e	5.0	Highest
+6d88fb20983e211be9168534b580c833	5.0	Highest
+6d85d9d5f551adaa92a276918f462fbe	5.0	Highest
+6d81453f00fb94345c02d87149c52f00	5.0	Highest
+b64ed807e9a505b54796b0937146d0bc	1.0	Lowest
+b6467b14d837634f4e04f6f0698e7bd3	1.0	Lowest
+93d8b11d613a563f5a26212282bb145e	1.0	Lowest
+93e27ca75901cf1b9d641cd11dd9f6e5	1.0	Lowest
+154696c4f8e96ed48f0c191eb09c0683	1.0	Lowest
+b63b2afaf851b15bdec6e67c553c0ece	1.0	Lowest
+b6397895a17ce86decd60b898b459796	1.0	Lowest
+93e6c730cc84ef7cfdd20cdfb2269144	1.0	Lowest
+93ebf843a46dd3ba8085784ff4c604fc	1.0	Lowest
+93f77f106febe8a119cf3662dd609b3a	1.0	Lowest
+Time taken: 273.482 seconds, Fetched: 20 row(s)
+
+
+PS4.5
+Order Count for each rating
+select rating, count(order_id) from ecommerce_sales group by rating order by rating desc;
+
+Total MapReduce CPU Time Spent: 11 seconds 380 msec
+OK
+5	65478
+4	22017
+3	9842
+2	4133
+1	15110
+Time taken: 98.345 seconds, Fetched: 5 row(s)
+
+PS5.1
+Payment Preference
+What are the most commonly used payment types?
+
+select payment_type,count(*) as sales from ecommerce_sales group by payment_type order by sales desc;
+Total MapReduce CPU Time Spent: 11 seconds 290 msec
+OK
+credit_card	86011
+boleto	22692
+voucher	6211
+debit_card	1666
+Time taken: 98.526 seconds, Fetched: 4 row(s)
+
+PS5.2
+Count of Orders With each No. of Payment Installments
+
+select payment_installments, count(order_id) as orders_count from ecommerce_sales group by payment_installments order by orders_count desc;
+
+Total MapReduce CPU Time Spent: 11 seconds 600 msec
+OK
+1	58030
+2	13515
+3	11652
+4	7926
+10	6866
+5	5982
+8	5055
+6	4587
+7	1803
+9	724
+12	166
+15	93
+18	38
+24	34
+11	25
+20	21
+13	19
+14	16
+16	7
+17	7
+21	6
+0	3
+NULL	3
+22	1
+23	1
+Time taken: 98.534 seconds, Fetched: 25 row(s)
+
+
+PS6
+Potential Customer's Location
+Where do most customers come from?
+
+select customer_state, count(customer_id) as customers_count from ecommerce_sales group by customer_state order by customers_count desc; 
+Total MapReduce CPU Time Spent: 11 seconds 410 msec
+OK
+SP	49133
+RJ	15185
+MG	13530
+RS	6435
+PR	5908
+SC	4254
+BA	3994
+DF	2467
+GO	2396
+ES	2332
+PE	1878
+CE	1538
+MT	1116
+PA	1103
+MS	847
+MA	838
+PB	630
+PI	567
+RN	565
+AL	458
+SE	395
+TO	334
+RO	280
+AM	170
+AC	93
+AP	84
+RR	50
+Time taken: 99.144 seconds, Fetched: 27 row(s)
+
+PS7
+Seller Rating
+PS7.1
+Which seller sold more?
+select seller_id, sum(quantity) as seller_sales from ecommerce_sales group by seller_id order by seller_sales desc limit 1;
+
+Total MapReduce CPU Time Spent: 15 seconds 540 msec
+OK
+1f50f920176fa81dab994f9023523100	3003
+Time taken: 101.97 seconds, Fetched: 1 row(s)
+
+PS7.2
+Which seller got more rating?
+select seller_id, avg(rating) as ratings from ecommerce_sales group by seller_id order by ratings desc limit 10;
+Total MapReduce CPU Time Spent: 15 seconds 690 msec
+OK
+c8143b3069f6746a77421b5ce30a450c	5.0
+11742f81550ac064cc9a40f67151d9ad	5.0
+c826c40d7b19f62a09e2d7c5e7295ee2	5.0
+c8771b1a10bb99bb34d3c459c5cffb53	5.0
+c8665a4dd081a2c436b1cd921079d0d9	5.0
+4049512728d969bec69f84088b012416	5.0
+404e1ba01358af4cd63f679b2c4d1fa1	5.0
+3bfba5a77604f6dfae7e6dd7aaf65821	5.0
+40ec8ab6cdafbcc4f544da38c67da39a	5.0
+4125d9385a25e82d2f72d3a0fd55bc3f	5.0
+Time taken: 100.421 seconds, Fetched: 10 row(s)
+
+
+select seller_id, count(rating) as ratings from ecommerce_sales group by seller_id order by ratings desc limit 10;
+
+Total MapReduce CPU Time Spent: 14 seconds 990 msec
+OK
+4a3ca9315b744ce9f8e9374361493884	2155
+6560211a19b47992c3666cc44a7e94c0	2130
+1f50f920176fa81dab994f9023523100	2017
+cc419e0650a3c5ba77189a1882b7556a	1893
+da8622b14eb17ae2831f4ac5b9dab84a	1662
+955fee9216a65b617aa5c0531780ce60	1530
+1025f0e2d44d7041d6cf58b6550e0bfa	1477
+7c67e1448b00f6e969d365cea6b010ab	1463
+7a67c85e85bb2ce8582c35f2203ad736	1245
+ea8482cd71df3c1969d7b9473ff13abc	1240
+Time taken: 102.385 seconds, Fetched: 10 row(s)
+
+
+PS8
+Logistics based Optimization Insights
+
+PS8.1
+Which city buys heavy weight products and low weight products?
+
+select seller_city, sum(product_weight_g) as weight from ecommerce_sales group by seller_city order by weight desc;
+pitangueiras	271
+avare	250
+condor	225
+caieiras	200
+uruguaiana	200
+cascavael	200
+juzeiro do norte	150
+resende	150
+vera cruz	110
+marapoama	100
+palotina	100
+sao pauo	50
+Time taken: 101.45 seconds, Fetched: 604 row(s)
+
+select seller_city, sum(product_weight_g) as weight, 'Heavy Weight' as product from ecommerce_sales group by seller_city order by weight desc limit 10 union all select seller_city, sum(product_weight_g) as weight, 'Low Weight' as product from ecommerce_sales group by seller_city order by weight asc limit 10;
+
+Total MapReduce CPU Time Spent: 29 seconds 930 msec
+OK
+sao paulo	47234742	Heavy Weight
+itaquaquecetuba	18724198	Heavy Weight
+ibitinga	14443774	Heavy Weight
+guarulhos	8092981	Heavy Weight
+curitiba	7526237	Heavy Weight
+campo limpo paulista	5839000	Heavy Weight
+sao jose do rio preto	5752963	Heavy Weight
+santa barbara dÂ´oeste	5658031	Heavy Weight
+ilicinea	5435450	Heavy Weight
+rio de janeiro	4014923	Heavy Weight
+sao pauo	50	Low Weight
+palotina	100	Low Weight
+marapoama	100	Low Weight
+vera cruz	110	Low Weight
+juzeiro do norte	150	Low Weight
+resende	150	Low Weight
+cascavael	200	Low Weight
+uruguaiana	200	Low Weight
+caieiras	200	Low Weight
+condor	225	Low Weight
+Time taken: 248.93 seconds, Fetched: 20 row(s)
+
+
+
+
+select customer_city, sum(product_weight_g) as weight, 'Heavy Weight' as product from ecommerce_sales group by customer_city order by weight desc limit 10 union all select customer_city, sum(product_weight_g) as weight, 'Low Weight' as product from ecommerce_sales group by customer_city order by weight asc limit 10;
+
+Total MapReduce CPU Time Spent: 37 seconds 990 msec
+OK
+presidente castello branco	50	Low Weight
+serio	50	Low Weight
+corumbatai do sul	50	Low Weight
+uruana de minas	50	Low Weight
+ribeira do amparo	50	Low Weight
+boa ventura	75	Low Weight
+serra dos dourados	75	Low Weight
+aparecida d'oeste	100	Low Weight
+polo petroquimico de triunfo	100	Low Weight
+miraguai	100	Low Weight
+sao paulo	35241016	Heavy Weight
+rio de janeiro	19068413	Heavy Weight
+belo horizonte	6693278	Heavy Weight
+brasilia	4194630	Heavy Weight
+curitiba	3498950	Heavy Weight
+campinas	3497943	Heavy Weight
+salvador	3287693	Heavy Weight
+porto alegre	3266370	Heavy Weight
+guarulhos	3006426	Heavy Weight
+niteroi	2376004	Heavy Weight
+Time taken: 256.831 seconds, Fetched: 20 row(s)
+
+
+
+(select avg(product_weight_g) from ecommerce_sales)
+2115.560422027792
+
+select customer_city, case when product_weight_g > 2115.5604 then 'Heavy Weight' else 'Low Weight' end as product_weight from ecommerce_sales;
+macaubas	Low Weight
+concordia	Low Weight
+brasilia	Low Weight
+rolim de moura	Low Weight
+Time taken: 0.086 seconds, Fetched: 116580 row(s)
+
+
+
+SELECT customer_city, CASE WHEN AVG(product_weight_g) > 5000 THEN 'Heavy Weight' ELSE 'Low Weight' END AS weight_category FROM ecommerce_sales GROUP BY customer_city;
+
+wenceslau guimaraes	Low Weight
+werneck	Low Weight
+witmarsum	Low Weight
+xambioa	Low Weight
+xambre	Low Weight
+xangri-la	Low Weight
+xanxere	Low Weight
+xapuri	Heavy Weight
+xavantina	Low Weight
+xaxim	Low Weight
+xexeu	Low Weight
+xinguara	Low Weight
+xique-xique	Low Weight
+zacarias	Low Weight
+ze doca	Low Weight
+zortea	Low Weight
+Time taken: 55.585 seconds, Fetched: 4095 row(s)
+
+
+PS8.2
+How much products sold within seller state?
+
+select seller_state, count(*) as state_prods from ecommerce_sales group by seller_state order by state_prods desc;
+
+Total MapReduce CPU Time Spent: 11 seconds 380 msec
+OK
+SP	83121
+MG	9099
+PR	9028
+RJ	4947
+SC	4252
+RS	2243
+DF	938
+BA	700
+GO	540
+PE	465
+MA	410
+ES	379
+MT	147
+CE	103
+MS	60
+RN	56
+PB	41
+RO	14
+PI	12
+SE	10
+PA	8
+AM	3
+ rio de janeiro	2
+AC	1
+ rio grande do sul	1
+Time taken: 98.903 seconds, Fetched: 25 row(s)
+
+
+select seller_id , count(*) as sells from ecommerce_sales s where seller_state  = customer_state group by s.seller_id ;
+
+ffa6adafb71b807dc13159e26431354c	2
+ffad1e7127fb622cb64a900751590acd	11
+ffc470761de7d0232558ba5e786e57b7	16
+ffcfefa19b08742c5d315f2791395ee5	1
+ffdd9f82b9a447f6f8d4b91554cc7dd3	4
+ffeee66ac5d5a62fe688b9d26f83f534	8
+fffd5413c0700ac820c7069d66d98c89	24
+ffff564a4f9085cd26170f4732393726	7
+Time taken: 60.697 seconds, Fetched: 2214 row(s)
+
+
+
+======================================================
+Dumping of SQL database from virtual to local machine
+======================================================
+
+mysqldump -u root -p ecommerce_result > dump.sql
+
+
+
+
+
+
+
+

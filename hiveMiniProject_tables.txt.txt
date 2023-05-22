@@ -1,0 +1,217 @@
+EXTERNAL TABLES, LOADING DATA WITH HIVE QUERY FROM ECOMMERCE_SALES DATASET, CREATING TABLE IN MYSQL AND SQOOP EXPORT:
+
+3.
+Which hour has more no. of sales?
+EXTERNAL TABLE:
+create external table PS3 (Hour string, total_sales int)row format delimited fields terminated by ',' location '/user/hive/warehouse/hiveProject/ps3/problem3.txt';
+
+INSERTING PROBLEM 1 QUERY INTO EXTERNAL TABLE:
+insert overwrite table PS3 select FROM_UNIXTIME(UNIX_TIMESTAMP(datetime,'yyyy-mm-dd HH:mm'),'HH') as HH, count(*) as hourly_sales from ecommerce_sales group by FROM_UNIXTIME(UNIX_TIMESTAMP(datetime,'yyyy-mm-dd HH:mm'),'HH') order by HH desc limit 3;
+
+MYSQL TABLE:
+create table Problem3(hour varchar(10), hourly_sales int);
+
+SQOOP SCRIPT:
+sqoop export --connect jdbc:mysql://localhost:3306/ecommerce --username root --password cloudera --table Problem3 --export-dir /user/hive/warehouse/hiveProject/ps3/problem3.txt/000000_0 --input-fields-terminated-by ','
+
+
+4.1
+Product Based Analysis
+Which category product has sold more?
+
+EXTERNAL TABLE:
+create external table PS4_1 (product_category string, sales int)row format delimited fields terminated by ',' location '/user/hive/warehouse/hiveProject/ps4/problem4_1.txt';
+
+INSERTING PROBLEM 4 -1  QUERY INTO EXTERNAL TABLE:
+insert overwrite table PS4_1 select product_category, sum(quantity) as total_sold from ecommerce_sales group by product_category order by total_sold desc limit 1;
+
+MYSQL TABLE:
+create table Problem4_1(product_cat varchar(40), sales int);
+
+SQOOP EXPORT:
+sqoop export --connect jdbc:mysql://localhost:3306/ecommerce --username root --password cloudera --table Problem4_1 --export-dir /user/hive/warehouse/hiveProject/ps4/problem4_1.txt/000000_0 --input-fields-terminated-by ','
+
+
+4.2
+Which category product has more rating?
+EXTERNAL TBALE:
+create external table PS4_2 (product_category string, avg_rating double)row format delimited fields terminated by ',' location '/user/hive/warehouse/hiveProject/ps4/problem4_2.txt';
+
+INSERTING PROBLEM 4 - 2 QUERY INTO EXTERNAL TABLE:
+insert overwrite table PS4_2 select product_category, avg(rating) as avg_rating from ecommerce_sales group by product_category order by avg_rating desc limit 1;
+
+MYSQL TABLE:
+create table Problem4_2(product_cat varchar(100), avg_rating float);
+
+SQOOP EXPORT:
+sqoop export --connect jdbc:mysql://localhost:3306/ecommerce --username root --password cloudera --table Problem4_2 --export-dir /user/hive/warehouse/hiveProject/ps4/problem4_2.txt/000000_0 --input-fields-terminated-by ','
+
+PS4.3
+which product has sold more?
+
+EXTERNAL TBALE:
+create external table PS4_3 (product_id string, total_sales double)row format delimited fields terminated by ',' location '/user/hive/warehouse/hiveProject/ps4/problem4_3.txt';
+
+INSERTING PROBLEM 4 - 2 QUERY INTO EXTERNAL TABLE:
+insert overwrite table PS4_3 select product_id, sum(quantity) as sale from ecommerce_sales group by product_id order by sale desc limit 1;
+
+MYSQL TABLE:
+create table Problem4_3(product_id varchar(100), sales float);
+
+SQOOP EXPORT:
+sqoop export --connect jdbc:mysql://localhost:3306/ecommerce --username root --password cloudera --table Problem4_3 --export-dir /user/hive/warehouse/hiveProject/ps4/problem4_3.txt/000000_0 --input-fields-terminated-by ','
+
+4.4
+Top 10 highest & least product rating?
+
+EXTERNAL TBALE:
+create external table PS4_4 (product_id string, avg_rating double,category string)row format delimited fields terminated by ',' location '/user/hive/warehouse/hiveProject/ps4/problem4_4.txt';
+
+INSERTING PROBLEM 4 - 4 QUERY INTO EXTERNAL TABLE:
+insert overwrite table PS4_4 select product_id, avg(rating) as ratings, 'Highest' as category from ecommerce_sales group by product_id order by ratings desc limit 10 union all select product_id, avg(rating) as ratings, 'Lowest' as category from ecommerce_sales group by product_id order by ratings asc limit 10;
+
+MYSQL TABLE:
+create table Problem4_4(product_id varchar(100), avg_rating float, category varchar(40));
+
+SQOOP EXPORT:
+sqoop export --connect jdbc:mysql://localhost:3306/ecommerce --username root --password cloudera --table Problem4_4 --export-dir /user/hive/warehouse/hiveProject/ps4/problem4_4.txt/000000_0 --input-fields-terminated-by ','
+
+4.5
+Order Count for each rating
+
+EXTERNAL TBALE:
+create external table PS4_5 (rating int, orders_count int)row format delimited fields terminated by ',' location '/user/hive/warehouse/hiveProject/ps4/problem4_5.txt';
+
+INSERTING PROBLEM 4 - 2 QUERY INTO EXTERNAL TABLE:
+insert overwrite table PS4_5 select rating, count(order_id) as orders_count from ecommerce_sales group by rating order by rating desc;
+
+MYSQL TABLE:
+create table Problem4_5(rating int, orders_count int);
+
+SQOOP EXPORT:
+sqoop export --connect jdbc:mysql://localhost:3306/ecommerce --username root --password cloudera --table Problem4_5 --export-dir /user/hive/warehouse/hiveProject/ps4/problem4_5.txt/000000_0 --input-fields-terminated-by ','
+
+
+5.1
+Payment Preference
+What are the most commonly used payment types?
+
+EXTERNAL TBALE:
+create external table PS5_1 (payment_type string, sales_count int)row format delimited fields terminated by ',' location '/user/hive/warehouse/hiveProject/ps5/problem5_1.txt';
+
+INSERTING PROBLEM 4 - 2 QUERY INTO EXTERNAL TABLE:
+insert overwrite table PS5_1 select payment_type,count(*) as sales from ecommerce_sales group by payment_type order by sales desc;
+
+MYSQL TABLE:
+create table Problem5_1(payment_type varchar(100), sales_count int);
+
+SQOOP EXPORT:
+sqoop export --connect jdbc:mysql://localhost:3306/ecommerce --username root --password cloudera --table Problem5_1 --export-dir /user/hive/warehouse/hiveProject/ps5/problem5_1.txt/000000_0 --input-fields-terminated-by ','
+
+
+
+5.2
+Count of Orders With each No. of Payment Installments
+
+EXTERNAL TBALE:
+create external table PS5_2 (payment_installments int, orders_count int)row format delimited fields terminated by ',' location '/user/hive/warehouse/hiveProject/ps5/problem5_2.txt';
+
+INSERTING PROBLEM 5-2 QUERY INTO EXTERNAL TABLE:
+insert overwrite table PS5_2 select payment_installments, count(order_id) as orders_count from ecommerce_sales group by payment_installments order by orders_count desc;
+
+
+MYSQL TABLE:
+create table Problem5_2(payment_installments varchar(30), orders_count int);
+
+SQOOP EXPORT:
+sqoop export --connect jdbc:mysql://localhost:3306/ecommerce --username root --password cloudera --table Problem5_2 --export-dir /user/hive/warehouse/hiveProject/ps5/problem5_2.txt/000000_0 --input-fields-terminated-by ','
+
+6.
+otential Customer's Location
+Where do most customers come from?
+
+EXTERNAL TBALE:
+create external table PS6 (customer_state string,customers_count int)row format delimited fields terminated by ',' location '/user/hive/warehouse/hiveProject/ps6/problem6.txt';
+
+INSERTING PROBLEM 5-2 QUERY INTO EXTERNAL TABLE:
+insert overwrite table PS6 select customer_state, count(customer_id) as customers_count from ecommerce_sales group by customer_state order by customers_count desc;
+
+
+MYSQL TABLE:
+create table Problem6(customer_state varchar(100),customers_count int);
+
+SQOOP EXPORT:
+sqoop export --connect jdbc:mysql://localhost:3306/ecommerce --username root --password cloudera --table Problem6 --export-dir /user/hive/warehouse/hiveProject/ps6/problem6.txt/000000_0 --input-fields-terminated-by ','
+
+7.
+Seller Rating
+
+PS7.1
+Which seller sold more?
+
+EXTERNAL TBALE:
+create external table PS7_1 (seller_id string, seller_sales int)row format delimited fields terminated by ',' location '/user/hive/warehouse/hiveProject/ps7/problem7_1.txt';
+
+INSERTING PROBLEM 7-1 QUERY INTO EXTERNAL TABLE:
+insert overwrite table PS7_1 select seller_id, sum(quantity) as seller_sales from ecommerce_sales group by seller_id order by seller_sales desc limit 1;
+
+
+MYSQL TABLE:
+create table Problem7_1(seller_id varchar(100), seller_sales int);
+
+SQOOP EXPORT:
+sqoop export --connect jdbc:mysql://localhost:3306/ecommerce --username root --password cloudera --table Problem7_1 --export-dir /user/hive/warehouse/hiveProject/ps7/problem7_1.txt/000000_0 --input-fields-terminated-by ','
+
+7.2
+Which seller got more rating?
+
+EXTERNAL TBALE:
+create external table PS7_2 (seller_id string, ratings int)row format delimited fields terminated by ',' location '/user/hive/warehouse/hiveProject/ps7/problem7_2.txt';
+
+INSERTING PROBLEM 7-2 QUERY INTO EXTERNAL TABLE:
+insert overwrite table PS7_2 select seller_id, count(rating) as ratings from ecommerce_sales group by seller_id order by ratings desc limit 10;
+
+MYSQL TABLE:
+create table Problem7_2(seller_id varchar(100), ratings int);
+
+SQOOP EXPORT:
+sqoop export --connect jdbc:mysql://localhost:3306/ecommerce --username root --password cloudera --table Problem7_2 --export-dir /user/hive/warehouse/hiveProject/ps7/problem7_2.txt/000000_0 --input-fields-terminated-by ','
+
+8.
+Logistics based Optimization Insights
+
+8.1
+Which city buys heavy weight products and low weight products?
+
+EXTERNAL TBALE:
+create external table PS8_1(customer_city string, category string)row format delimited fields terminated by ',' location '/user/hive/warehouse/hiveProject/ps8/problem8_1.txt';
+
+INSERTING PROBLEM 8-1 QUERY INTO EXTERNAL TABLE:
+insert overwrite table PS8_1 SELECT customer_city, CASE WHEN AVG(product_weight_g) > 5000 THEN 'Heavy Weight' ELSE 'Low Weight' END AS weight_category FROM ecommerce_sales GROUP BY customer_city;
+
+
+MYSQL TABLE:
+create table Problem8_1(customer_city varchar(60), category varchar(100));
+
+SQOOP EXPORT:
+sqoop export --connect jdbc:mysql://localhost:3306/ecommerce --username root --password cloudera --table Problem8_1 --export-dir /user/hive/warehouse/hiveProject/ps8/problem8_1.txt/000000_0 --input-fields-terminated-by ','
+
+8.2
+How much products sold within seller state?
+
+EXTERNAL TBALE:
+create external table PS8_2(seller_state string, state_prods int)row format delimited fields terminated by ',' location '/user/hive/warehouse/hiveProject/ps8/problem8_2.txt';
+
+INSERTING PROBLEM 8-2 QUERY INTO EXTERNAL TABLE:
+insert overwrite table PS8_2 select seller_state, count(*) as state_prods from ecommerce_sales group by seller_state order by state_prods desc;
+
+
+MYSQL TABLE:
+create table Problem8_2(seller_state varchar(60), state_prods int);
+
+SQOOP EXPORT:
+sqoop export --connect jdbc:mysql://localhost:3306/ecommerce --username root --password cloudera --table Problem8_2 --export-dir /user/hive/warehouse/hiveProject/ps8/problem8_2.txt/000000_0 --input-fields-terminated-by ','
+
+
+
+
